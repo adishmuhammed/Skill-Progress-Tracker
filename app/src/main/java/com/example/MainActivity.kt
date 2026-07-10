@@ -145,16 +145,19 @@ fun MainScreenContent(viewModel: JournalViewModel) {
     val isRinging by viewModel.isAlarmRinging.collectAsState()
     val context = LocalContext.current
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar(
-                modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
-            ) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val compactNav = maxWidth < 380.dp
+
+        Scaffold(
+            bottomBar = {
+                NavigationBar(
+                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+                ) {
                 NavigationBarItem(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
                     icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard") },
-                    label = { Text("Dashboard", maxLines = 1, softWrap = false, fontSize = 10.sp) },
+                    label = { if (!compactNav) Text("Home", maxLines = 1, softWrap = false, fontSize = 10.sp) },
                     alwaysShowLabel = false,
                     modifier = Modifier.testTag("tab_dashboard")
                 )
@@ -178,7 +181,7 @@ fun MainScreenContent(viewModel: JournalViewModel) {
                     selected = selectedTab == 3,
                     onClick = { selectedTab = 3 },
                     icon = { Icon(Icons.Default.Build, contentDescription = "Inventory") },
-                    label = { Text("Inventory", maxLines = 1, softWrap = false, fontSize = 10.sp) },
+                    label = { if (!compactNav) Text("Items", maxLines = 1, softWrap = false, fontSize = 10.sp) },
                     alwaysShowLabel = false,
                     modifier = Modifier.testTag("tab_inventory")
                 )
@@ -186,7 +189,7 @@ fun MainScreenContent(viewModel: JournalViewModel) {
                     selected = selectedTab == 4,
                     onClick = { selectedTab = 4 },
                     icon = { Icon(Icons.Default.Person, contentDescription = "Connections") },
-                    label = { Text("Connections", maxLines = 1, softWrap = false, fontSize = 10.sp) },
+                    label = { if (!compactNav) Text("People", maxLines = 1, softWrap = false, fontSize = 10.sp) },
                     alwaysShowLabel = false,
                     modifier = Modifier.testTag("tab_connections")
                 )
@@ -208,37 +211,38 @@ fun MainScreenContent(viewModel: JournalViewModel) {
                     alwaysShowLabel = false,
                     modifier = Modifier.testTag("tab_journal")
                 )
+                }
             }
-        }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            when (selectedTab) {
-                0 -> DashboardTab(viewModel, onNavigateToJournal = { selectedTab = 5 })
-                1 -> SkillsTab(viewModel)
-                2 -> BuffsTab(viewModel)
-                3 -> InventoryTab(viewModel)
-                4 -> ConnectionsTab(viewModel)
-                5 -> DailyJournalTab(viewModel)
-            }
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                when (selectedTab) {
+                    0 -> DashboardTab(viewModel, onNavigateToJournal = { selectedTab = 5 })
+                    1 -> SkillsTab(viewModel)
+                    2 -> BuffsTab(viewModel)
+                    3 -> InventoryTab(viewModel)
+                    4 -> ConnectionsTab(viewModel)
+                    5 -> DailyJournalTab(viewModel)
+                }
 
-            // 1. Overlay for ACTIVE ringing alarm (Mandatory Takeover Screen)
-            if (isRinging) {
-                AlarmActiveOverlay(
-                    onSnooze = {
-                        viewModel.snoozeAlarm()
-                        Toast.makeText(context, "Alarm snoozed for 5 minutes", Toast.LENGTH_SHORT).show()
-                    },
-                    onDismissClicked = {
-                        // Tapping Dismiss directs them to complete their journal entry
-                        viewModel.stopAlarmSound()
-                        selectedTab = 5 // Switch directly to Journal tab!
-                        Toast.makeText(context, "Sound silenced! Complete your journal entry to permanently dismiss.", Toast.LENGTH_LONG).show()
-                    }
-                )
+                // 1. Overlay for ACTIVE ringing alarm (Mandatory Takeover Screen)
+                if (isRinging) {
+                    AlarmActiveOverlay(
+                        onSnooze = {
+                            viewModel.snoozeAlarm()
+                            Toast.makeText(context, "Alarm snoozed for 5 minutes", Toast.LENGTH_SHORT).show()
+                        },
+                        onDismissClicked = {
+                            // Tapping Dismiss directs them to complete their journal entry
+                            viewModel.stopAlarmSound()
+                            selectedTab = 5 // Switch directly to Journal tab!
+                            Toast.makeText(context, "Sound silenced! Complete your journal entry to permanently dismiss.", Toast.LENGTH_LONG).show()
+                        }
+                    )
+                }
             }
         }
     }
@@ -263,16 +267,21 @@ fun DashboardTab(viewModel: JournalViewModel, onNavigateToJournal: () -> Unit) {
     val stamina = (skillsList.filter { it.category.lowercase() == "fitness" }.sumOf { it.level } * 10) + (buffsList.filter { it.type == "BENEFIT" && it.aspectAffected.contains("Energy") }.size * 10) + 100
     val charisma = (connectionsList.sumOf { it.affinityLevel } * 10) + 100
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 16.dp)
-    ) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val compact = maxWidth < 380.dp
+        val horizontalPadding = if (compact) 12.dp else 16.dp
+        val sectionGap = if (compact) 10.dp else 16.dp
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 16.dp)
+        ) {
         // 1. Hero Image / Visual Header
         item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
+                    .height(if (compact) 132.dp else 180.dp)
             ) {
                 // Background generated image
                 Image(
@@ -297,7 +306,7 @@ fun DashboardTab(viewModel: JournalViewModel, onNavigateToJournal: () -> Unit) {
                     modifier = Modifier
                         .align(Alignment.BottomStart)
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(horizontalPadding),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Bottom
                 ) {
@@ -311,7 +320,7 @@ fun DashboardTab(viewModel: JournalViewModel, onNavigateToJournal: () -> Unit) {
                         )
                         Text(
                             text = "Daily Growth Journal",
-                            fontSize = 22.sp,
+                            fontSize = if (compact) 18.sp else 22.sp,
                             fontWeight = FontWeight.Black,
                             color = Color.White
                         )
@@ -336,7 +345,7 @@ fun DashboardTab(viewModel: JournalViewModel, onNavigateToJournal: () -> Unit) {
                     // Gorgeous glowing circular Avatar
                     Box(
                         modifier = Modifier
-                            .size(54.dp)
+                            .size(if (compact) 42.dp else 54.dp)
                             .clip(CircleShape)
                             .background(
                                 Brush.sweepGradient(
@@ -365,13 +374,13 @@ fun DashboardTab(viewModel: JournalViewModel, onNavigateToJournal: () -> Unit) {
 
         // 2. Alarm Control Card & Quick Test Panel
         item {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(sectionGap))
             AlarmControlCard(viewModel)
         }
 
         // 3. Today's Mandatory Habit Status Card
         item {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(sectionGap))
             val hour by viewModel.alarmHour.collectAsState()
             val minute by viewModel.alarmMinute.collectAsState()
             TodayStatusCard(isTodayWritten, hour, minute, onNavigateToJournal)
@@ -379,8 +388,8 @@ fun DashboardTab(viewModel: JournalViewModel, onNavigateToJournal: () -> Unit) {
 
         // 3.5. Today's Active Quests (Task Management Widget)
         item {
-            Spacer(modifier = Modifier.height(16.dp))
-            Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Spacer(modifier = Modifier.height(sectionGap))
+            Box(modifier = Modifier.padding(horizontal = horizontalPadding)) {
                 DailyTaskChecklist(
                     viewModel = viewModel,
                     dateStr = todayDateStr
@@ -390,7 +399,7 @@ fun DashboardTab(viewModel: JournalViewModel, onNavigateToJournal: () -> Unit) {
 
         // Character Sheet Stats Card
         item {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(sectionGap))
             CharacterSheetHeader(
                 heroLevel = heroLevel,
                 xpFraction = xpFraction,
@@ -404,22 +413,25 @@ fun DashboardTab(viewModel: JournalViewModel, onNavigateToJournal: () -> Unit) {
             )
         }
 
-        // Custom Canvas Charts for Seductive Visual Stats
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-            SeductiveStatsCanvasChart(entries = entries)
-        }
+            if (!compact) {
+                // Custom Canvas Charts for Seductive Visual Stats
+                item {
+                    Spacer(modifier = Modifier.height(sectionGap))
+                    SeductiveStatsCanvasChart(entries = entries)
+                }
 
-        // Firebase Cloud Sync Settings & Control Card
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-            FirebaseSyncCard(viewModel = viewModel)
-        }
+                // Firebase Cloud Sync Settings & Control Card
+                item {
+                    Spacer(modifier = Modifier.height(sectionGap))
+                    FirebaseSyncCard(viewModel = viewModel)
+                }
 
-        // 4. Tome of Knowledge Panel
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-            TomeOfKnowledgePanel()
+                // 4. Tome of Knowledge Panel
+                item {
+                    Spacer(modifier = Modifier.height(sectionGap))
+                    TomeOfKnowledgePanel()
+                }
+            }
         }
     }
 }
@@ -990,6 +1002,7 @@ fun TodayStatusCard(isWritten: Boolean, alarmHour: Int, alarmMinute: Int, onNavi
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AlarmControlCard(viewModel: JournalViewModel) {
     val context = LocalContext.current
@@ -1000,20 +1013,25 @@ fun AlarmControlCard(viewModel: JournalViewModel) {
 
     var showAdjuster by remember { mutableStateOf(false) }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val compact = maxWidth < 380.dp
+        val outerPadding = if (compact) 12.dp else 16.dp
+        val innerPadding = if (compact) 14.dp else 20.dp
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = outerPadding),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(24.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(
+        ) {
+            Column(modifier = Modifier.padding(innerPadding)) {
+                FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
@@ -1031,7 +1049,7 @@ fun AlarmControlCard(viewModel: JournalViewModel) {
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
-                    Column {
+                    Column(modifier = Modifier.weight(1f, fill = false)) {
                         Text(
                             text = "Daily Wake Alarm",
                             fontWeight = FontWeight.Bold,
@@ -1044,8 +1062,8 @@ fun AlarmControlCard(viewModel: JournalViewModel) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                }
-                Switch(
+                    }
+                    Switch(
                     checked = isEnabled,
                     onCheckedChange = { viewModel.setAlarmEnabled(it) },
                     modifier = Modifier.testTag("alarm_switch")
@@ -1054,13 +1072,15 @@ fun AlarmControlCard(viewModel: JournalViewModel) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                val buttonModifier = if (compact) Modifier.fillMaxWidth() else Modifier.weight(1f)
                 OutlinedButton(
                     onClick = { showAdjuster = !showAdjuster },
-                    modifier = Modifier.weight(1f),
+                    modifier = buttonModifier,
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     contentPadding = PaddingValues(vertical = 8.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1075,7 +1095,7 @@ fun AlarmControlCard(viewModel: JournalViewModel) {
                         viewModel.triggerTestAlarm()
                         Toast.makeText(context, "Test Alarm triggered! App is ringing.", Toast.LENGTH_SHORT).show()
                     },
-                    modifier = Modifier.weight(1f),
+                    modifier = buttonModifier,
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryIndigo),
                     contentPadding = PaddingValues(vertical = 8.dp)
                 ) {
@@ -1157,9 +1177,10 @@ fun AlarmControlCard(viewModel: JournalViewModel) {
             }
         }
     }
+    }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun DailyJournalTab(viewModel: JournalViewModel) {
     val isTodayWritten by viewModel.isTodayWritten.collectAsState()
@@ -1191,12 +1212,17 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
     val wordCount = remember(journalText) { journalText.split(Regex("\\s+")).filter { it.isNotBlank() }.size }
     val charCount = remember(journalText) { journalText.length }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
-    ) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val compact = maxWidth < 380.dp
+        val pagePadding = if (compact) 12.dp else 16.dp
+        val cardPadding = if (compact) 14.dp else 20.dp
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(pagePadding)
+                .verticalScroll(rememberScrollState())
+        ) {
         Text(
             text = displayTitle,
             fontSize = 20.sp,
@@ -1325,18 +1351,18 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
                 shape = RoundedCornerShape(24.dp),
                 border = zenBorder
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                Column(modifier = Modifier.padding(cardPadding)) {
                     // Header Row with Title and Zen Toggle
-                    Row(
+                    FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = if (zenMode) "🧘 Zen Writing Sanctum" else "✍️ Daily Growth Journal",
-                            fontSize = 15.sp,
+                            fontSize = if (compact) 14.sp else 15.sp,
                             fontWeight = FontWeight.Black,
                             color = if (zenMode) AccentCyan else PrimaryIndigo
                         )
@@ -1398,8 +1424,8 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = title,
-                                    fontSize = 12.sp,
+                                    text = if (compact) title.substringAfter(' ') else title,
+                                    fontSize = if (compact) 11.sp else 12.sp,
                                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                                     color = if (selected) {
                                         if (zenMode) AccentCyan else PrimaryIndigo
@@ -1910,7 +1936,7 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
                             onValueChange = { journalText = it },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(if (zenMode) 320.dp else 220.dp)
+                                .height(if (zenMode) 300.dp else if (compact) 180.dp else 220.dp)
                                 .testTag("journal_input"),
                             keyboardOptions = KeyboardOptions(
                                 capitalization = KeyboardCapitalization.Sentences,
@@ -4259,5 +4285,3 @@ fun DailyTaskChecklist(
         }
     }
 }
-
-
