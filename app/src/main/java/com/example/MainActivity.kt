@@ -1191,15 +1191,32 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
     val wordCount = remember(journalText) { journalText.split(Regex("\\s+")).filter { it.isNotBlank() }.size }
     val charCount = remember(journalText) { journalText.length }
 
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val compactPhone = maxWidth < 380.dp
+        val screenPadding = if (compactPhone) 10.dp else 16.dp
+        val cardPadding = if (compactPhone) 12.dp else 20.dp
+        val journalEditorHeight = when {
+            zenMode && compactPhone -> 260.dp
+            zenMode -> 320.dp
+            compactPhone -> 180.dp
+            else -> 220.dp
+        }
+        val previewHeight = when {
+            zenMode && compactPhone -> 280.dp
+            zenMode -> 340.dp
+            compactPhone -> 210.dp
+            else -> 260.dp
+        }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(screenPadding)
             .verticalScroll(rememberScrollState())
     ) {
         Text(
             text = displayTitle,
-            fontSize = 20.sp,
+            fontSize = if (compactPhone) 18.sp else 20.sp,
             fontWeight = FontWeight.Black,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -1211,7 +1228,7 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
             modifier = Modifier.padding(vertical = 2.0.dp)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(if (compactPhone) 10.dp else 16.dp))
 
         // Daily task checklist integrated with the growth entry
         DailyTaskChecklist(
@@ -1224,7 +1241,7 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
             }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(if (compactPhone) 10.dp else 16.dp))
 
         if (!showForm) {
             val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
@@ -1325,20 +1342,21 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
                 shape = RoundedCornerShape(24.dp),
                 border = zenBorder
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                Column(modifier = Modifier.padding(cardPadding)) {
                     // Header Row with Title and Zen Toggle
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                            .padding(bottom = if (compactPhone) 8.dp else 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = if (zenMode) "🧘 Zen Writing Sanctum" else "✍️ Daily Growth Journal",
-                            fontSize = 15.sp,
+                            fontSize = if (compactPhone) 13.sp else 15.sp,
                             fontWeight = FontWeight.Black,
-                            color = if (zenMode) AccentCyan else PrimaryIndigo
+                            color = if (zenMode) AccentCyan else PrimaryIndigo,
+                            modifier = Modifier.weight(1f)
                         )
 
                         Card(
@@ -1352,7 +1370,10 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
                             border = BorderStroke(1.dp, if (zenMode) AccentCyan else MaterialTheme.colorScheme.outlineVariant)
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                modifier = Modifier.padding(
+                                    horizontal = if (compactPhone) 8.dp else 10.dp,
+                                    vertical = if (compactPhone) 5.dp else 6.dp
+                                ),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
@@ -1363,7 +1384,7 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "Zen Focus",
+                                    text = if (compactPhone) "Zen" else "Zen Focus",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (zenMode) AccentCyan else MaterialTheme.colorScheme.onSurfaceVariant
@@ -1381,7 +1402,11 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
                             .padding(4.dp),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        val tabs = listOf("✍️ Write & Assist", "📖 Live Scroll Preview")
+                        val tabs = if (compactPhone) {
+                            listOf("✍️ Write", "📖 Preview")
+                        } else {
+                            listOf("✍️ Write & Assist", "📖 Live Scroll Preview")
+                        }
                         tabs.forEachIndexed { index, title ->
                             val selected = activeTab == index
                             Box(
@@ -1399,7 +1424,7 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
                             ) {
                                 Text(
                                     text = title,
-                                    fontSize = 12.sp,
+                                    fontSize = if (compactPhone) 11.sp else 12.sp,
                                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                                     color = if (selected) {
                                         if (zenMode) AccentCyan else PrimaryIndigo
@@ -1485,7 +1510,7 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(if (zenMode) 340.dp else 260.dp)
+                                .height(previewHeight)
                                 .background(
                                     if (androidx.compose.foundation.isSystemInDarkTheme()) {
                                         Color(0xFF1E1E2C)
@@ -1501,7 +1526,7 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
                                     ),
                                     RoundedCornerShape(16.dp)
                                 )
-                                .padding(16.dp)
+                                .padding(if (compactPhone) 12.dp else 16.dp)
                                 .verticalScroll(rememberScrollState())
                         ) {
                             if (journalText.isBlank()) {
@@ -1910,7 +1935,7 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
                             onValueChange = { journalText = it },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(if (zenMode) 320.dp else 220.dp)
+                                .height(journalEditorHeight)
                                 .testTag("journal_input"),
                             keyboardOptions = KeyboardOptions(
                                 capitalization = KeyboardCapitalization.Sentences,
@@ -1975,7 +2000,7 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1987,10 +2012,12 @@ fun DailyJournalTab(viewModel: JournalViewModel) {
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "Scribe Level: ${scribeTier.name}",
+                                    text = if (compactPhone) scribeTier.name else "Scribe Level: ${scribeTier.name}",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = scribeTier.color
+                                    color = scribeTier.color,
+                                    maxLines = 2,
+                                    modifier = Modifier.weight(1f, fill = false)
                                 )
                             }
                             
@@ -2374,6 +2401,12 @@ fun AnalysisResultDialog(result: JournalAnalysisResult, onDismiss: () -> Unit) {
 fun BuffsTab(viewModel: JournalViewModel) {
     val buffs by viewModel.allBuffs.collectAsState()
 
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val compactPhone = maxWidth < 380.dp
+        val horizontalPadding = if (compactPhone) 12.dp else 20.dp
+        val heroVerticalPadding = if (compactPhone) 18.dp else 24.dp
+        val sectionFontSize = if (compactPhone) 14.sp else 16.sp
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 24.dp)
@@ -2387,7 +2420,7 @@ fun BuffsTab(viewModel: JournalViewModel) {
                             colors = listOf(PrimaryIndigo, Color(0xFF3B82F6), AccentCyan)
                         )
                     )
-                    .padding(horizontal = 20.dp, vertical = 24.dp)
+                    .padding(horizontal = horizontalPadding, vertical = heroVerticalPadding)
             ) {
                 Column {
                     Text(
@@ -2399,14 +2432,15 @@ fun BuffsTab(viewModel: JournalViewModel) {
                     )
                     Text(
                         text = "Real-Life Effects Tracker",
-                        fontSize = 24.sp,
+                        fontSize = if (compactPhone) 20.sp else 24.sp,
                         fontWeight = FontWeight.Black,
                         color = Color.White
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Analyzes your physical and mental state as logged in your daily journals.",
-                        fontSize = 13.sp,
+                        fontSize = if (compactPhone) 12.sp else 13.sp,
+                        lineHeight = if (compactPhone) 16.sp else 18.sp,
                         color = Color.White.copy(alpha = 0.8f)
                     )
                 }
@@ -2419,7 +2453,7 @@ fun BuffsTab(viewModel: JournalViewModel) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
+                        .padding(horizontalPadding),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
                     shape = RoundedCornerShape(24.dp),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
@@ -2427,7 +2461,7 @@ fun BuffsTab(viewModel: JournalViewModel) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(32.dp),
+                            .padding(if (compactPhone) 20.dp else 32.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
@@ -2462,9 +2496,9 @@ fun BuffsTab(viewModel: JournalViewModel) {
                     Text(
                         text = "🟢 Positive Benefits Logged",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
+                        fontSize = sectionFontSize,
                         color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 8.dp)
                     )
                 }
                 items(benefits) { buff ->
@@ -2478,9 +2512,9 @@ fun BuffsTab(viewModel: JournalViewModel) {
                     Text(
                         text = "🔴 Negative Factors / Harms Tracked",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
+                        fontSize = sectionFontSize,
                         color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 8.dp)
                     )
                 }
                 items(harms) { buff ->
@@ -2488,6 +2522,7 @@ fun BuffsTab(viewModel: JournalViewModel) {
                 }
             }
         }
+    }
     }
 }
 
@@ -2514,10 +2549,15 @@ fun BuffItemCard(buff: com.example.data.db.Buff, onDelete: () -> Unit) {
         if (isDark) Color(0xFFC62828).copy(alpha = 0.5f) else Color(0xFFEF9A9A)
     }
 
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val compactPhone = maxWidth < 380.dp
+        val horizontalPadding = if (compactPhone) 12.dp else 16.dp
+        val cardPadding = if (compactPhone) 12.dp else 16.dp
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .padding(horizontal = horizontalPadding, vertical = 6.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(20.dp),
         border = BorderStroke(1.dp, borderColor)
@@ -2525,12 +2565,16 @@ fun BuffItemCard(buff: com.example.data.db.Buff, onDelete: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(cardPadding),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
@@ -2544,18 +2588,18 @@ fun BuffItemCard(buff: com.example.data.db.Buff, onDelete: () -> Unit) {
                             color = themeColor
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Intensity: ${buff.intensity}/10",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
                     )
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = buff.name,
-                    fontSize = 15.sp,
+                    fontSize = if (compactPhone) 14.sp else 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -2563,7 +2607,8 @@ fun BuffItemCard(buff: com.example.data.db.Buff, onDelete: () -> Unit) {
                     text = buff.description,
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 2.dp)
+                    modifier = Modifier.padding(top = 2.dp),
+                    lineHeight = if (compactPhone) 16.sp else 18.sp
                 )
                 Text(
                     text = "Logged on: ${buff.date}",
@@ -2572,7 +2617,10 @@ fun BuffItemCard(buff: com.example.data.db.Buff, onDelete: () -> Unit) {
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
-            IconButton(onClick = onDelete) {
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.size(if (compactPhone) 40.dp else 48.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete",
@@ -2580,6 +2628,7 @@ fun BuffItemCard(buff: com.example.data.db.Buff, onDelete: () -> Unit) {
                 )
             }
         }
+    }
     }
 }
 
@@ -4259,5 +4308,3 @@ fun DailyTaskChecklist(
         }
     }
 }
-
-
