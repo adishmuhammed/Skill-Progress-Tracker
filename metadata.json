@@ -1,0 +1,6 @@
+{
+  "name": "Skill Progress Tracker",
+  "description": "Track your skills and progress with daily journals and a mandatory alarm analyzed by Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
